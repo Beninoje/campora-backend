@@ -1,13 +1,16 @@
 package com.unilist.campora.services;
 
 import com.unilist.campora.model.Listing;
+import com.unilist.campora.model.User;
 import com.unilist.campora.repository.ListingRepository;
+import com.unilist.campora.repository.UserRepository;
 import com.unilist.campora.responses.ListingResponse;
 import com.unilist.campora.responses.PageableListingResponse;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,10 +20,12 @@ import java.util.UUID;
 public class ListingService {
 
     private final ListingRepository listingRepository;
+    private final UserRepository userRepository;
 
 
-    public ListingService(ListingRepository listingRepository) {
+    public ListingService(ListingRepository listingRepository, UserRepository userRepository) {
         this.listingRepository = listingRepository;
+        this.userRepository = userRepository;
     }
 
     @Cacheable(
@@ -28,6 +33,11 @@ public class ListingService {
             key="#pageable.pageNumber + '-' + #pageable.pageSize"
     )
     public PageableListingResponse<ListingResponse> getListings(Pageable pageable){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found in DB"));
+
         Page<Listing> page = listingRepository.findAll(pageable);
         Page<ListingResponse> mapped = page.map(
         listing -> new ListingResponse(
@@ -37,7 +47,9 @@ public class ListingService {
                 listing.getImages(),
                 listing.getCategory(),
                 listing.getCondition(),
-                listing.getDescription()
+                listing.getDescription(),
+                listing.getUser().getId().equals(currentUser.getId())
+
         ));
         return new PageableListingResponse<>(mapped);
 

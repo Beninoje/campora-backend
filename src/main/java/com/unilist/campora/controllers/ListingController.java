@@ -45,7 +45,7 @@ public class ListingController {
         this.userService = userService;
     }
 
-    @CacheEvict(value = "listings-all", allEntries = true)
+    @CacheEvict(value = "listings", allEntries = true)
     @PostMapping("/create")
     public ResponseEntity<List<Listing>> createListing(@RequestBody CreateListingDto body){
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -117,7 +117,7 @@ public class ListingController {
 
     @Transactional
     @DeleteMapping("/delete/{id}")
-    @CacheEvict(value={"listings-all", "users"}, allEntries=true)
+    @CacheEvict(value={"listings", "users"}, allEntries=true)
     public ResponseEntity<?> deleteListing(@PathVariable UUID id) {
         Listing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
@@ -141,16 +141,20 @@ public class ListingController {
     @GetMapping("/all")
     public ResponseEntity<PageableListingResponse<ListingResponse>> getAllListings(
             @RequestParam(defaultValue="0") int page,
-            @RequestParam(defaultValue="4") int value
+            @RequestParam(defaultValue="4") int size
     ){
-        Pageable pageable = PageRequest.of(page,value, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page,size, Sort.by("createdAt").descending());
         return ResponseEntity.ok(listingService.getListings(pageable));
     }
 
 
     @GetMapping("/view/{id}")
     public ResponseEntity<ListingOwnerDTO> viewListing(@PathVariable UUID id){
-        ListingOwnerDTO listing = userService.getListingOwner(id);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found in DB"));
+        ListingOwnerDTO listing = userService.getListingOwner(id, currentUser.getId());
 
         return ResponseEntity.ok().body(listing);
 

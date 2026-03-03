@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -16,6 +17,22 @@ public interface ChatRepository  extends JpaRepository<Chat, UUID> {
             UUID sellerId,
             UUID listingId
     );
+    @Query(
+            """
+                    SELECT c FROM Chat c
+                    WHERE c.id = :chatId
+                    AND (c.buyer.id = :userId OR c.seller.id = :userId)
+            """
+
+    )
+    Optional<Chat> findChatForUser(UUID chatId, UUID userId);
+    Chat findChatByBuyerIdAndSellerIdAndListingId(
+            UUID buyerId,
+            UUID sellerId,
+            UUID listingId
+    );
     @Query("SELECT c FROM Chat c WHERE c.buyer = :user OR c.seller = :user")
     List<Chat> findAllByBuyerOrSeller(User user);
+
+
 }

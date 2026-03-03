@@ -1,5 +1,6 @@
 package com.unilist.campora.dto.chat;
 
+import com.unilist.campora.dto.messages.MessageResponseDto;
 import com.unilist.campora.model.Message;
 import lombok.*;
 
@@ -13,7 +14,8 @@ import java.util.UUID;
 @Builder
 public class FetchChatByIdDto {
     private UUID id;
-    private String buyerName;
-    private String sellerName;
-    private List<Message> messages;
+    private String otherFirstName;
+    private String otherLastName;
+    private UUID otherUserId;
+    private List<MessageResponseDto> messages;
 }

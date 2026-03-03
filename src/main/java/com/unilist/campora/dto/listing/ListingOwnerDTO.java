@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Getter
@@ -22,8 +23,25 @@ public class ListingOwnerDTO {
     String ownerFirstName;
     String ownerLastName;
     String ownerEmail;
+    boolean existingChat;
+    UUID chatId;
 
-    public ListingOwnerDTO(UUID listingId, String title, Double price, String category, String description, List<String> images, String condition, LocalDateTime createdAt, UUID ownerId, String ownerFirstName, String ownerLastName, String ownerEmail) {
+    public ListingOwnerDTO(
+            UUID listingId,
+            String title,
+            Double price,
+            String category,
+            String description,
+            List<String> images,
+            String condition,
+            LocalDateTime createdAt,
+            UUID ownerId,
+            String ownerFirstName,
+            String ownerLastName,
+            String ownerEmail,
+            boolean existingChat,
+            UUID chatId
+    ) {
         this.listingId = listingId;
         this.title = title;
         this.price = price;
@@ -36,6 +54,8 @@ public class ListingOwnerDTO {
         this.ownerFirstName = ownerFirstName;
         this.ownerLastName = ownerLastName;
         this.ownerEmail = ownerEmail;
+        this.existingChat = existingChat;
+        this.chatId = chatId;
     }
 
     public ListingOwnerDTO() {}

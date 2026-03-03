@@ -2,6 +2,7 @@ package com.unilist.campora.controllers;
 
 import com.unilist.campora.dto.chat.ChatMessageDto;
 import com.unilist.campora.dto.chat.CreateChatDto;
+import com.unilist.campora.dto.chat.FetchChatByIdDto;
 import com.unilist.campora.model.Chat;
 import com.unilist.campora.model.Message;
 import com.unilist.campora.model.User;
@@ -15,9 +16,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/chats")
@@ -27,15 +33,13 @@ public class ChatController {
     private final MessageRepository messageRepository;
     private final ChatRepository chatRepository;
     private final UserRepository userRepository;
-    private final UserService userService;
 
-    public ChatController(SimpMessagingTemplate messageTemplate, MessageService messageService, MessageRepository messageRepository, ChatRepository chatRepository, UserRepository userRepository, UserService userService) {
+    public ChatController(SimpMessagingTemplate messageTemplate, MessageService messageService, MessageRepository messageRepository, ChatRepository chatRepository, UserRepository userRepository) {
         this.messageTemplate = messageTemplate;
         this.messageService = messageService;
         this.messageRepository = messageRepository;
         this.chatRepository = chatRepository;
         this.userRepository = userRepository;
-        this.userService = userService;
     }
 
     @MessageMapping("/chat.sendMessage")
@@ -123,16 +127,30 @@ public class ChatController {
     }
 
 
-//    @GetMapping("/get/{id}")
-//    public ResponseEntity<?> getChat(@PathVariable UUID id){
-//        Chat chat = chatRepository.findById(id)
-//                .orElseThrow(()-> new IllegalArgumentException("Chat does not exist"));
-//
-//        FetchChatByIdDto chatResponse = new FetchChatByIdDto(
-//                chat.getBuyer().getFirstName(),
-//                chat.getSeller().getFirstName(),
-//                chat.getMessages()
-//        );
-//        return ResponseEntity.ok(chatResponse);
-//    }
+    @GetMapping("/get/{id}")
+    public ResponseEntity<FetchChatByIdDto> getChat(@PathVariable UUID id){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found in DB"));
+
+        Chat chat = chatRepository.findChatForUser(id,currentUser.getId())
+                .orElseThrow(()-> new IllegalArgumentException("Chat does not exist or access denied"));
+
+        User otherUser;
+        if(chat.getBuyer().getId().equals(currentUser.getId())){
+            otherUser = chat.getSeller();
+        }
+        else{
+            otherUser = chat.getBuyer();
+        }
+        return ResponseEntity.ok(new FetchChatByIdDto(
+                chat.getId(),
+                otherUser.getFirstName(),
+                otherUser.getLastName(),
+                otherUser.getId(),
+                messageService.getAllMessagesByChat(chat)
+
+        ));
+    }
 }

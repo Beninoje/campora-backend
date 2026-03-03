@@ -16,9 +16,10 @@ public class ListingResponse {
     private String category;
     private String condition;
     private String description;
+    private boolean currUserListing;
 
 
-    public ListingResponse(UUID id, String title, Double price, List<String> images, String category, String condition, String description) {
+    public ListingResponse(UUID id, String title, Double price, List<String> images, String category, String condition, String description, boolean currUserListing) {
         this.id = id;
         this.title = title;
         this.price = price;
@@ -26,6 +27,8 @@ public class ListingResponse {
         this.category = category;
         this.condition = condition;
         this.description = description;
+        this.currUserListing = currUserListing;
+
     }
 
     public ListingResponse() {
